@@ -7,7 +7,7 @@ import type {
   RememberJobStatus,
   RememberResult,
 } from "@mysten-incubation/memwal";
-import { loadMemoryConfig, type MemoryConfig } from "./config";
+import { assertValidNamespace, loadMemoryConfig, type MemoryConfig } from "./config";
 import { MemoryServiceError, toMemoryError } from "./errors";
 
 if (typeof window !== "undefined") {
@@ -21,7 +21,11 @@ if (typeof window !== "undefined") {
  */
 export interface MemoryClient {
   health(): Promise<HealthResult>;
-  remember(text: string, options?: { dedupe?: boolean; idempotencyKey?: string }): Promise<RememberAcceptedResult>;
+  remember(
+    text: string,
+    namespaceOrOptions?: string | { dedupe?: boolean; idempotencyKey?: string },
+    options?: { dedupe?: boolean; idempotencyKey?: string },
+  ): Promise<RememberAcceptedResult>;
   waitForRememberJob(jobId: string, opts?: { pollIntervalMs?: number; timeoutMs?: number }): Promise<RememberResult>;
   getRememberStatus(jobId: string): Promise<RememberJobStatus>;
   recall(params: { query: string; limit?: number; namespace?: string; maxDistance?: number }): Promise<RecallResult>;
@@ -192,7 +196,11 @@ export class MemoryService {
    * `dedupe: true` asks the relayer to resolve identical text in this
    * namespace to the existing memory instead of writing a duplicate blob.
    */
-  async rememberConfirmed(text: string, { dedupe = false, timeoutMs }: { dedupe?: boolean; timeoutMs?: number } = {}): Promise<ConfirmedWrite> {
+  async rememberConfirmed(
+    text: string,
+    { dedupe = false, timeoutMs, namespace }: { dedupe?: boolean; timeoutMs?: number; namespace?: string } = {},
+  ): Promise<ConfirmedWrite> {
+    if (namespace !== undefined) assertValidNamespace(namespace);
     const trimmed = text.trim();
     if (!trimmed) {
       throw new MemoryServiceError("INVALID_INPUT", "Memory text is empty.", "Provide non-empty text to remember.");
@@ -203,7 +211,8 @@ export class MemoryService {
 
     let accepted: RememberAcceptedResult;
     try {
-      accepted = await this.client.remember(trimmed, dedupe ? { dedupe: true } : undefined);
+      const opts = dedupe ? { dedupe: true } : undefined;
+      accepted = namespace === undefined ? await this.client.remember(trimmed, opts) : await this.client.remember(trimmed, namespace, opts ?? {});
     } catch (err) {
       throw toMemoryError(err, "submit memory write", this.secrets);
     }
@@ -211,11 +220,11 @@ export class MemoryService {
       throw new MemoryServiceError("WRITE_UNCONFIRMED", "Relayer accepted the write but returned no job ID.", "Nothing can be confirmed; retry the write.");
     }
 
-    return this.confirmWrite(accepted.job_id, timeoutMs);
+    return this.confirmWrite(accepted.job_id, timeoutMs, namespace);
   }
 
   /** Wait for an existing write job (e.g. one left pending by an earlier run). */
-  async confirmWrite(jobId: string, timeoutMs = this.writeTimeoutMs): Promise<ConfirmedWrite> {
+  async confirmWrite(jobId: string, timeoutMs = this.writeTimeoutMs, namespace = this.config.namespace): Promise<ConfirmedWrite> {
     let result: RememberResult;
     try {
       result = await this.client.waitForRememberJob(jobId, { timeoutMs });
@@ -230,10 +239,10 @@ export class MemoryService {
         { jobId },
       );
     }
-    if (result.namespace && result.namespace !== this.config.namespace) {
+    if (result.namespace && result.namespace !== namespace) {
       throw new MemoryServiceError(
         "WRITE_UNCONFIRMED",
-        `Write landed in namespace "${result.namespace}", expected "${this.config.namespace}".`,
+        `Write landed in namespace "${result.namespace}", expected "${namespace}".`,
         "Check MEMWAL_NAMESPACE.",
         { jobId },
       );
@@ -244,7 +253,7 @@ export class MemoryService {
       blobId: result.blob_id,
       memoryId: result.id,
       owner: result.owner,
-      namespace: result.namespace ?? this.config.namespace,
+      namespace: result.namespace ?? namespace,
     };
   }
 
