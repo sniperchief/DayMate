@@ -1,0 +1,29 @@
+{
+  "name": "daymate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DayMate — a memory companion for elderly people and their family caregivers, backed by Walrus Memory on Mainnet.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "memory:health": "tsx scripts/health.ts",
+    "memory:seed": "tsx scripts/seed.ts",
+    "memory:recall": "tsx scripts/recall.ts",
+    "memory:verify": "tsx scripts/verify.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mysten-incubation/memwal": "^0.1.12",
+    "@mysten/seal": "^1.5.2",
+    "@mysten/sui": "^2.38.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  }
+}

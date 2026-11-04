@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+
+# local run output (may contain account-scoped metadata)
+.daymate/
+
+# build output (future Next.js app)
+.next/
+out/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# logs / OS
+*.log
+.DS_Store
+Thumbs.db
