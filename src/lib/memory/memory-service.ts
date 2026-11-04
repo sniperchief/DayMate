@@ -268,16 +268,22 @@ export class MemoryService {
   }
 
   /** Natural-language recall from this service's namespace. */
-  async recall(query: string, { limit = 5 }: { limit?: number } = {}): Promise<RecallOutcome> {
+  /**
+   * Natural-language recall. Results are in semantic-relevance order; DayMate
+   * deliberately does not use `sort: "recent"`, which orders by WRITE time,
+   * not by when the remembered event happened.
+   */
+  async recall(query: string, { limit = 5, namespace = this.config.namespace }: { limit?: number; namespace?: string } = {}): Promise<RecallOutcome> {
     const q = query.trim();
     if (!q) throw new MemoryServiceError("INVALID_INPUT", "Recall query is empty.", "Ask a question in natural language.");
     if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
       throw new MemoryServiceError("INVALID_INPUT", "Recall limit must be an integer between 1 and 100.", "Use a smaller limit.");
     }
+    assertValidNamespace(namespace);
 
     let res: RecallResult;
     try {
-      res = await this.client.recall({ query: q, limit, namespace: this.config.namespace });
+      res = await this.client.recall({ query: q, limit, namespace });
     } catch (err) {
       throw toMemoryError(err, "recall", this.secrets);
     }
@@ -287,7 +293,7 @@ export class MemoryService {
       distance: r.distance,
       createdAt: r.created_at,
     }));
-    return { query: q, namespace: this.config.namespace, total: res?.total ?? results.length, results, empty: results.length === 0 };
+    return { query: q, namespace, total: res?.total ?? results.length, results, empty: results.length === 0 };
   }
 
   /** Inventory of this namespace from the relayer (metadata only). */

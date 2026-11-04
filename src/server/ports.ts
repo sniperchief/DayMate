@@ -40,9 +40,21 @@ export interface Syncer {
   now(source: SyncSource): Promise<SyncOutcome | { status: "skipped"; reason: string }>;
 }
 
+export interface RecallHit {
+  text: string;
+  blobId: string;
+  distance: number;
+}
+
+/** Semantic recall from one Walrus namespace (the Phase 1 MemoryService in production). */
+export interface Recaller {
+  recall(query: string, opts: { namespace: string; limit: number }): Promise<RecallHit[]>;
+}
+
 export interface Ctx {
   userId: string;
   repo: Repo;
   photos: PhotoStore;
   sync: Syncer;
+  recall: Recaller;
 }

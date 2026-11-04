@@ -9,7 +9,8 @@ import { vi } from "vitest";
 import type { Elder, Memory, WalrusRecord } from "../../src/lib/domain/types";
 import type { ConfirmedWrite } from "../../src/lib/memory";
 import { performWrite, prepareSync, type MemoryWriter, type SyncSource, type SyncStore } from "../../src/lib/walrus-sync/sync";
-import type { ContentTable, Ctx, PhotoStore, Repo, Syncer, Tables } from "../../src/server/ports";
+import type { ContentTable, Ctx, PhotoStore, RecallHit, Recaller, Repo, Syncer, Tables } from "../../src/server/ports";
+import { keywords, normalize, stem, words } from "../../src/lib/ask/router";
 
 export interface FakeDb {
   elders: Elder[];
@@ -203,8 +204,71 @@ export function fakePhotos(): PhotoStore & { files: Map<string, File> } {
   };
 }
 
-export function fakeCtx(db: FakeDb, userId: string, writer = mockWriter()): Ctx & { writer: ReturnType<typeof mockWriter>; syncer: ReturnType<typeof fakeSyncer>; photos: ReturnType<typeof fakePhotos> } {
+/**
+ * [mock] In-memory stand-in for Walrus Memory. Like the real service it keeps
+ * EVERY blob ever written (edits and deletes leave old blobs behind), so the
+ * Ask DayMate filtering is tested against realistic stale data. Its "semantic"
+ * distance is a deterministic keyword-overlap heuristic — not real embeddings.
+ */
+export interface FakeWalrus {
+  blobs: { namespace: string; blobId: string; text: string }[];
+  /** Extra hits returned for every recall (e.g. to simulate foreign or forged blobs). */
+  injected: RecallHit[];
+  recallCalls: { query: string; namespace: string; limit: number }[];
+  failRecall?: boolean;
+  /** Return no hits for this many calls (simulates a transient empty relayer response). */
+  emptyCalls?: number;
+}
+
+export function fakeWalrus(): FakeWalrus {
+  return { blobs: [], injected: [], recallCalls: [] };
+}
+
+function fakeDistance(query: string, text: string): number {
+  const q = new Set(keywords(query));
+  if (!q.size) return 0.9;
+  const t = new Set(words(normalize(text)).map(stem));
+  const shared = [...q].filter((k) => t.has(k)).length;
+  return Math.round((0.85 - 0.5 * (shared / q.size)) * 1000) / 1000;
+}
+
+export function walrusWriter(walrus: FakeWalrus): MemoryWriter {
+  return {
+    rememberConfirmed: async (text, opts) => {
+      // relayer-side dedupe: identical text in a namespace resolves to the existing blob
+      const existing = walrus.blobs.find((b) => b.namespace === opts.namespace && b.text === text);
+      const blobId = existing?.blobId ?? `FAKE_WALRUS_BLOB_${walrus.blobs.length + 1}`;
+      if (!existing) walrus.blobs.push({ namespace: opts.namespace, blobId, text });
+      return { status: "done", jobId: `FAKE_JOB_${blobId}`, blobId, memoryId: blobId, owner: "0xMOCK", namespace: opts.namespace };
+    },
+    confirmWrite: async () => {
+      throw new Error("not used");
+    },
+  };
+}
+
+export function fakeRecaller(walrus: FakeWalrus): Recaller {
+  return {
+    async recall(query, { namespace, limit }) {
+      walrus.recallCalls.push({ query, namespace, limit });
+      if (walrus.failRecall) throw new Error("relayer unavailable (mock)");
+      if (walrus.emptyCalls) {
+        walrus.emptyCalls--;
+        return [];
+      }
+      const own = walrus.blobs.filter((b) => b.namespace === namespace).map((b) => ({ text: b.text, blobId: b.blobId, distance: fakeDistance(query, b.text) }));
+      return [...own, ...walrus.injected].sort((a, b) => a.distance - b.distance).slice(0, limit);
+    },
+  };
+}
+
+export function fakeCtx(
+  db: FakeDb,
+  userId: string,
+  writer: MemoryWriter = mockWriter(),
+  walrus: FakeWalrus = fakeWalrus(),
+): Ctx & { writer: ReturnType<typeof mockWriter>; syncer: ReturnType<typeof fakeSyncer>; photos: ReturnType<typeof fakePhotos>; walrus: FakeWalrus } {
   const syncer = fakeSyncer(fakeSyncStore(db), writer);
   const photos = fakePhotos();
-  return { userId, repo: fakeRepo(db, userId), photos, sync: syncer, writer, syncer };
+  return { userId, repo: fakeRepo(db, userId), photos, sync: syncer, recall: fakeRecaller(walrus), writer: writer as ReturnType<typeof mockWriter>, syncer, walrus };
 }

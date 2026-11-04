@@ -52,7 +52,13 @@ main(async () => {
     const conn = await service.checkConnection({ verifyCredentials: true });
     console.log(`Walrus relayer ${conn.serverUrl} network=${conn.network}\n`);
     user = await createTestUser("smoke");
-    const ctx: Ctx = { userId: user.id, repo: supabaseRepo(user.client), photos: supabasePhotoStore(user.client), sync: syncer };
+    const ctx: Ctx = {
+      userId: user.id,
+      repo: supabaseRepo(user.client),
+      photos: supabasePhotoStore(user.client),
+      sync: syncer,
+      recall: { recall: async (q, o) => (await service.recall(q, o)).results },
+    };
 
     console.log("Creating profile, family member, routine and memory (fictional data)…");
     const must = (label: string, r: ops.OpResult) => {

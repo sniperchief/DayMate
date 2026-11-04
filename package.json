@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "app:rls-check": "tsx scripts/rls-check.ts",
-    "app:smoke": "tsx scripts/app-smoke.ts"
+    "app:smoke": "tsx scripts/app-smoke.ts",
+    "ask:smoke": "tsx scripts/ask-smoke.ts"
   },
   "dependencies": {
     "@mysten-incubation/memwal": "^0.1.12",

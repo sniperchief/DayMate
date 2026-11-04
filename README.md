@@ -18,7 +18,9 @@ DayMate's memory layer is **[Walrus Memory](https://docs.wal.app/walrus-memory/s
 
   See [docs/PHASE2_SETUP.md](docs/PHASE2_SETUP.md).
 
-Not built yet: Ask DayMate chat, Tatum RPC, contracts, AI features, notifications, and medical features.
+- **Phase 3A: Ask DayMate.** Ask everyday questions in text. A deterministic router chooses Postgres (family, profile, schedules) or Walrus Memory (personal memories). Only the current, confirmed blobs from this caregiver's own `walrus_records` are accepted. See [docs/PHASE3A_ASK.md](docs/PHASE3A_ASK.md).
+
+Not built yet: Tatum RPC, contracts, AI features, voice, notifications, and medical features.
 
 ## Quick start
 
@@ -32,6 +34,7 @@ npm test                 # unit tests (labelled mocks; offline)
 npm run typecheck
 npm run app:rls-check    # LIVE: RLS isolation against your Supabase project
 npm run app:smoke        # LIVE: app → Supabase → Walrus Mainnet → recall
+npm run ask:smoke        # LIVE: Ask DayMate against real Supabase + Walrus Mainnet
 npm run memory:health    # Phase 1 Mainnet checks (unchanged)
 ```
 
@@ -40,15 +43,16 @@ npm run memory:health    # Phase 1 Mainnet checks (unchanged)
 ```
 src/app/                 Next.js App Router
   (auth)/                login, register, auth server actions
-  (app)/                 protected pages: dashboard, profile, family, routines, memories
+  (app)/                 protected pages: dashboard, ask, profile, family, routines, memories
   auth/confirm/          email-confirmation route
 src/proxy.ts             session refresh + route guard (Next 16 "proxy")
 src/components/          forms and UI pieces
 src/lib/memory/          Phase 1 Walrus Memory service (reused, not duplicated)
 src/lib/walrus-sync/     DB ↔ Walrus sync: text builders, sync logic, Supabase store
+src/lib/ask/             Ask DayMate: question router, Walrus evidence filter/ranking
 src/lib/domain/          types, server-side validation (zod), schedule calculation
 src/lib/supabase/        user-scoped, admin and env helpers
-src/server/              operations (business logic), repo ports + Supabase adapters
+src/server/              operations, ask (answer construction), repo ports + Supabase adapters
 supabase/migrations/     schema, RLS, storage policies
 scripts/                 Phase 1 CLI + Phase 2 live verification scripts
 tests/                   vitest (Phase 1 + tests/phase2)

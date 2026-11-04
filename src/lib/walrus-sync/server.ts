@@ -4,7 +4,7 @@ import { MemoryService } from "../memory";
 import { adminClient } from "../supabase/admin";
 import { performWrite, prepareSync, type MemoryWriter, type SyncSource } from "./sync";
 import { supabaseSyncStore } from "./supabase-store";
-import type { Syncer } from "../../server/ports";
+import type { Recaller, Syncer } from "../../server/ports";
 
 /**
  * Production wiring: reuses the Phase 1 MemoryService (one instance per
@@ -12,18 +12,26 @@ import type { Syncer } from "../../server/ports";
  */
 let service: MemoryService | undefined;
 
+/** The one MemoryService (and SDK client) for this server process. */
+function memoryService(): MemoryService {
+  service ??= MemoryService.fromEnv(process.env);
+  return service;
+}
+
 function memoryWriter(): MemoryWriter {
   return {
-    rememberConfirmed(text, opts) {
-      service ??= MemoryService.fromEnv(process.env);
-      return service.rememberConfirmed(text, opts);
-    },
-    confirmWrite(jobId, timeoutMs, namespace) {
-      service ??= MemoryService.fromEnv(process.env);
-      return service.confirmWrite(jobId, timeoutMs, namespace);
-    },
+    rememberConfirmed: (text, opts) => memoryService().rememberConfirmed(text, opts),
+    confirmWrite: (jobId, timeoutMs, namespace) => memoryService().confirmWrite(jobId, timeoutMs, namespace),
   };
 }
+
+/** Recall through the same MemoryService used for writes. */
+export const walrusRecaller: Recaller = {
+  async recall(query, { namespace, limit }) {
+    const outcome = await memoryService().recall(query, { namespace, limit });
+    return outcome.results.map((r) => ({ text: r.text, blobId: r.blobId, distance: r.distance }));
+  },
+};
 
 function log(source: SyncSource, status: string, extra = ""): void {
   console.info(`[daymate] walrus ${source.kind}${source.sourceId ? `:${source.sourceId}` : ""} → ${status}${extra}`);

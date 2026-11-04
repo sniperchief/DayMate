@@ -54,6 +54,9 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
     if (authError.status === 429 || authError.code === "over_email_send_rate_limit") {
       return error("Too many sign-up emails have been sent recently. Please wait a little while and try again.", values);
     }
+    if (authError.code === "email_address_invalid") {
+      return error("Please check the highlighted fields.", values, { email: "That email address can't be used. Please check it and try again." });
+    }
     const weak = authError.code === "weak_password" || /password/i.test(authError.message);
     return error(weak ? authError.message : "We couldn't create your account. Please try again.", values, weak ? { password: authError.message } : undefined);
   }

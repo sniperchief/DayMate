@@ -102,13 +102,13 @@ p {
   border-bottom: 1px solid var(--border);
 }
 .site-header-inner {
-  max-width: 1080px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0.75rem 1rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1.5rem;
+  gap: 0.5rem 1rem;
 }
 .brand {
   font-weight: 700;
@@ -135,7 +135,7 @@ p {
   display: inline-flex;
   align-items: center;
   min-height: 48px;
-  padding: 0 0.9rem;
+  padding: 0 0.7rem;
   border-radius: 999px;
   color: var(--text);
   text-decoration: none;
@@ -149,7 +149,7 @@ p {
   color: var(--accent);
 }
 main {
-  max-width: 1080px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 1.5rem 1rem 4rem;
 }
@@ -570,5 +570,102 @@ details.add > summary::-webkit-details-marker {
   * {
     transition: none !important;
     animation: none !important;
+  }
+}
+
+/* ── Ask DayMate ── */
+.ask {
+  max-width: 760px;
+}
+.ask-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 12rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.ask-welcome-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.ask-examples {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.ask-example {
+  font-weight: 600;
+  text-align: left;
+}
+.bubble {
+  max-width: 88%;
+  padding: 0.85rem 1.1rem;
+  border-radius: 18px;
+  font-size: 1.12rem;
+}
+.bubble-text {
+  margin: 0;
+  white-space: pre-line;
+}
+.bubble-question {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fff;
+  border-bottom-right-radius: 6px;
+}
+.bubble-answer {
+  align-self: flex-start;
+  background: var(--surface-muted);
+  border-bottom-left-radius: 6px;
+}
+.bubble-unsure {
+  background: var(--accent-soft);
+}
+.bubble-error {
+  align-self: flex-start;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-weight: 600;
+}
+.bubble-loading {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.bubble-source {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.ask-form {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+.ask-form input {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.15rem;
+}
+.ask-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+@media (max-width: 640px) {
+  .ask-log {
+    padding: 0.85rem;
+  }
+  .bubble {
+    max-width: 100%;
   }
 }
