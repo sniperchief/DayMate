@@ -1,6 +1,7 @@
 import type { WalrusKind, WalrusRecord } from "@/lib/domain/types";
 import { IN_FLIGHT_GRACE_MS } from "@/lib/walrus-sync/sync";
-import { retryWalrusAction } from "@/app/(app)/actions";
+import { retrySuiAnchorAction, retryWalrusAction } from "@/app/(app)/actions";
+import type { MemoryAnchor } from "@/lib/sui-anchor/types";
 import { RetryButton } from "./bits";
 
 export function Avatar({ name, url, large = false }: { name: string; url?: string | null; large?: boolean }) {
@@ -130,4 +131,82 @@ export function walrusIndex(records: WalrusRecord[]): Map<string, WalrusRecord> 
 
 export function hasRecentPending(records: WalrusRecord[], now: number): boolean {
   return records.some((r) => r.status === "pending" && now - new Date(r.updated_at).getTime() < IN_FLIGHT_GRACE_MS);
+}
+
+const SUI_EXPLORER_TX = "https://suiscan.xyz/mainnet/tx/";
+
+function shortDigest(d: string): string {
+  return d.length > 14 ? `${d.slice(0, 6)}…${d.slice(-6)}` : d;
+}
+
+/**
+ * Sui anchor status for one memory, independent of its Walrus status.
+ * "Verified on Sui" appears only after Tatum independently verified the
+ * transaction and event; a submitted transaction or a digest alone is "Pending".
+ */
+export function SuiStatus({
+  anchor,
+  memoryId,
+  walrus,
+  enabled,
+}: {
+  /** The anchor for the memory's CURRENT Walrus blob, if any. */
+  anchor?: MemoryAnchor;
+  memoryId: string;
+  walrus?: WalrusRecord;
+  enabled: boolean;
+}) {
+  const retry = retrySuiAnchorAction.bind(null, memoryId);
+  const stored = walrus?.status === "stored";
+  const tx = anchor?.tx_digest ? (
+    <a className="blob-id" href={`${SUI_EXPLORER_TX}${anchor.tx_digest}`} target="_blank" rel="noopener noreferrer" title="View the transaction on a Sui Mainnet explorer">
+      tx {shortDigest(anchor.tx_digest)}
+    </a>
+  ) : null;
+
+  if (!anchor) {
+    return (
+      <div className="walrus">
+        <span className="badge badge-none">Not anchored on Sui</span>
+        {enabled && stored ? <RetryButton action={retry} label="Anchor on Sui" pendingLabel="Anchoring on Sui…" /> : null}
+      </div>
+    );
+  }
+  if (anchor.status === "verified") {
+    return (
+      <div className="walrus">
+        <span className="badge badge-stored">✓ Verified on Sui</span>
+        {tx}
+      </div>
+    );
+  }
+  if (anchor.status === "failed") {
+    return (
+      <div className="walrus">
+        <span className="badge badge-failed">Sui anchor failed</span>
+        {tx}
+        {enabled ? <RetryButton action={retry} label="Retry Sui anchor" pendingLabel="Anchoring on Sui…" /> : null}
+      </div>
+    );
+  }
+  return (
+    <div className="walrus">
+      <span className="badge badge-pending" role="status">
+        Sui anchor pending
+      </span>
+      {tx}
+      <span className="muted">{anchor.status === "submitted" ? "Submitted. Waiting for independent verification." : "Not confirmed on Sui yet."}</span>
+      {enabled ? <RetryButton action={retry} label="Check again" pendingLabel="Checking Sui…" /> : null}
+    </div>
+  );
+}
+
+/** Anchor for each memory's CURRENT Walrus blob (older versions are history, not status). */
+export function anchorIndex(anchors: MemoryAnchor[], walrus: Map<string, WalrusRecord>): Map<string, MemoryAnchor> {
+  const map = new Map<string, MemoryAnchor>();
+  for (const a of anchors) {
+    const record = walrus.get(a.memory_id);
+    if (record?.status === "stored" && record.blob_id === a.walrus_blob_id) map.set(a.memory_id, a);
+  }
+  return map;
 }

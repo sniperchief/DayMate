@@ -30,12 +30,20 @@ export function NavLinks() {
 }
 
 /** Retry a Walrus write; waits for the SDK result and shows it. */
-export function RetryButton({ action, label = "Retry saving to Walrus" }: { action: (prev: FormState) => Promise<FormState>; label?: string }) {
+export function RetryButton({
+  action,
+  label = "Retry saving to Walrus",
+  pendingLabel = "Saving to Walrus… (this can take a minute)",
+}: {
+  action: (prev: FormState) => Promise<FormState>;
+  label?: string;
+  pendingLabel?: string;
+}) {
   const [state, formAction, pending] = useActionState(action, IDLE);
   return (
     <form action={formAction} style={{ display: "inline-flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
       <button type="submit" className="btn btn-secondary btn-small" disabled={pending}>
-        {pending ? "Saving to Walrus… (this can take a minute)" : label}
+        {pending ? pendingLabel : label}
       </button>
       <span role="status" className={state.status === "error" ? "field-error" : "muted"}>
         {state.status !== "idle" ? state.message : ""}

@@ -1,5 +1,7 @@
 import type { Elder, FamilyMember, Memory, Routine, WalrusRecord } from "../lib/domain/types";
 import type { SyncOutcome, SyncSource } from "../lib/walrus-sync/sync";
+import type { AnchorOutcome, AnchorRequest } from "../lib/sui-anchor/anchor";
+import type { MemoryAnchor } from "../lib/sui-anchor/types";
 
 export interface Tables {
   elders: Elder;
@@ -25,6 +27,8 @@ export interface Repo {
   remove(table: ContentTable, id: string): Promise<boolean>;
   memoriesForPerson(personId: string): Promise<Memory[]>;
   walrusRecords(elderId: string): Promise<WalrusRecord[]>;
+  /** Caregiver-readable anchor status columns (never salts or commitments). */
+  memoryAnchors(elderId: string): Promise<MemoryAnchor[]>;
 }
 
 export interface PhotoStore {
@@ -51,10 +55,19 @@ export interface Recaller {
   recall(query: string, opts: { namespace: string; limit: number }): Promise<RecallHit[]>;
 }
 
+/** Sui Mainnet anchoring of memory commitments (Phase 3B), server-only. */
+export interface Anchorer {
+  /** False until SUI_ANCHOR_ENABLED=true; then anchor() is a no-op returning "disabled". */
+  readonly enabled: boolean;
+  anchor(req: AnchorRequest, opts?: { retryFailed?: boolean }): Promise<AnchorOutcome | { status: "disabled" }>;
+}
+
 export interface Ctx {
   userId: string;
   repo: Repo;
   photos: PhotoStore;
   sync: Syncer;
   recall: Recaller;
+  /** Optional so Phase 2/3A callers and scripts work unchanged. */
+  anchor?: Anchorer;
 }

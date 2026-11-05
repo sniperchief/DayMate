@@ -19,12 +19,21 @@
     "test": "vitest run",
     "app:rls-check": "tsx scripts/rls-check.ts",
     "app:smoke": "tsx scripts/app-smoke.ts",
-    "ask:smoke": "tsx scripts/ask-smoke.ts"
+    "ask:smoke": "tsx scripts/ask-smoke.ts",
+    "sui:preflight": "tsx scripts/sui-preflight.ts",
+    "sui:rls-check": "tsx scripts/sui-rls-check.ts",
+    "sui:anchor-synthetic": "tsx scripts/sui-anchor-synthetic.ts",
+    "move:build": "sui move build --path move/daymate_anchor",
+    "move:test": "sui move test --path move/daymate_anchor",
+    "sui:localnet-e2e": "tsx scripts/sui-localnet-e2e.ts",
+    "sui:publish": "tsx scripts/sui-publish.ts"
   },
   "dependencies": {
+    "@grpc/grpc-js": "1.14.6",
     "@mysten-incubation/memwal": "^0.1.12",
     "@mysten/seal": "^1.5.2",
     "@mysten/sui": "^2.38.0",
+    "@protobuf-ts/grpc-transport": "2.11.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "next": "^16.4.5",

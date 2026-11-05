@@ -81,6 +81,9 @@ export function fakeRepo(db: FakeDb, userId: string): Repo {
     async walrusRecords(elderId) {
       return own(db.walrus).filter((w) => w.elder_id === elderId);
     },
+    async memoryAnchors() {
+      return []; // Phase 3B anchors are tested with their own fakes (tests/phase3b)
+    },
   };
 }
 

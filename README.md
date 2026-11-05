@@ -20,7 +20,9 @@ DayMate's memory layer is **[Walrus Memory](https://docs.wal.app/walrus-memory/s
 
 - **Phase 3A: Ask DayMate.** Ask everyday questions in text. A deterministic router chooses Postgres (family, profile, schedules) or Walrus Memory (personal memories). Only the current, confirmed blobs from this caregiver's own `walrus_records` are accepted. See [docs/PHASE3A_ASK.md](docs/PHASE3A_ASK.md).
 
-Not built yet: Tatum RPC, contracts, AI features, voice, notifications, and medical features.
+- **Phase 3B: Sui Mainnet anchoring + Tatum verification.** Once a memory's current version is stored on Walrus, DayMate can publish a salted SHA-256 commitment of it on Sui Mainnet. Only 32 bytes and a schema number go on chain, never personal data. Tatum independently verifies each transaction. The feature is off until `SUI_ANCHOR_ENABLED=true`. See [docs/PHASE3B_SUI.md](docs/PHASE3B_SUI.md).
+
+Not built yet: AI features, voice, notifications, and medical features.
 
 ## Quick start
 
@@ -36,6 +38,9 @@ npm run app:rls-check    # LIVE: RLS isolation against your Supabase project
 npm run app:smoke        # LIVE: app → Supabase → Walrus Mainnet → recall
 npm run ask:smoke        # LIVE: Ask DayMate against real Supabase + Walrus Mainnet
 npm run memory:health    # Phase 1 Mainnet checks (unchanged)
+npm run move:test        # Move unit tests for move/daymate_anchor (needs the Sui CLI)
+npm run sui:rls-check    # LIVE: RLS for the Phase 3B anchor tables
+npm run sui:preflight    # LIVE, read-only: Tatum, project wallet, package, dry run
 ```
 
 ## Layout
@@ -50,12 +55,14 @@ src/components/          forms and UI pieces
 src/lib/memory/          Phase 1 Walrus Memory service (reused, not duplicated)
 src/lib/walrus-sync/     DB ↔ Walrus sync: text builders, sync logic, Supabase store
 src/lib/ask/             Ask DayMate: question router, Walrus evidence filter/ranking
+src/lib/sui-anchor/      Phase 3B: commitments, eligibility, anchoring lifecycle, Sui submission, Tatum verification
+move/daymate_anchor/     Sui Move package: emits MemoryCommitted { commitment, schema_version }
 src/lib/domain/          types, server-side validation (zod), schedule calculation
 src/lib/supabase/        user-scoped, admin and env helpers
 src/server/              operations, ask (answer construction), repo ports + Supabase adapters
 supabase/migrations/     schema, RLS, storage policies
 scripts/                 Phase 1 CLI + Phase 2 live verification scripts
-tests/                   vitest (Phase 1 + tests/phase2)
+tests/                   vitest (Phase 1, tests/phase2, tests/phase3a, tests/phase3b)
 ```
 
 ## Security
@@ -65,4 +72,5 @@ tests/                   vitest (Phase 1 + tests/phase2)
 - Every table uses RLS (`caregiver_id = auth.uid()`). Composite foreign keys stop rows from being attached to another caregiver's elder.
 - Walrus sync status can only be written by the server, so a client cannot mark its own record as "stored".
 - Photos are in a private bucket under `<caregiver uid>/…` and are served through short-lived signed URLs.
+- The Sui project signing key (`SUI_ANCHOR_PRIVATE_KEY`) and `TATUM_API_KEY` are server-only. Salts and commitment payloads live in `memory_anchor_secrets`, which caregivers cannot read.
 - No mock or offline mode can be mistaken for Mainnet.

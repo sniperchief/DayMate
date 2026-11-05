@@ -118,3 +118,11 @@ export async function retryWalrusAction(kind: string, sourceId: string, _prev: F
   revalidateAll();
   return toState(r, {});
 }
+
+// ── Sui anchor retry ─────────────────────────────────────────────────────
+export async function retrySuiAnchorAction(memoryId: string, _prev: FormState): Promise<FormState> {
+  const ctx = await requireCtx();
+  const r = await ops.retrySuiAnchor(ctx, memoryId);
+  revalidatePath("/memories");
+  return toState(r, {});
+}

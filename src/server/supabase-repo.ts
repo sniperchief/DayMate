@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Elder, Memory, WalrusRecord } from "../lib/domain/types";
+import { ANCHOR_PUBLIC_COLUMNS, type MemoryAnchor } from "../lib/sui-anchor/types";
 import type { ContentTable, PhotoStore, Repo, Tables } from "./ports";
 
 const ORDER: Record<ContentTable, { column: string; ascending: boolean }> = {
@@ -47,6 +48,10 @@ export function supabaseRepo(db: SupabaseClient): Repo {
     },
     async walrusRecords(elderId) {
       return check("walrus records", await db.from("walrus_records").select("*").eq("elder_id", elderId)) as WalrusRecord[];
+    },
+    async memoryAnchors(elderId) {
+      // explicit columns: caregivers have column-level SELECT only on status fields
+      return check("memory anchors", await db.from("memory_anchors").select(ANCHOR_PUBLIC_COLUMNS).eq("elder_id", elderId)) as unknown as MemoryAnchor[];
     },
   };
 }

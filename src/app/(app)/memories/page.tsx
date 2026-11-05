@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createMemoryAction, deleteMemoryAction } from "@/app/(app)/actions";
 import { PendingRefresher } from "@/components/bits";
 import { MemoryForm } from "@/components/entity-forms";
-import { ConfirmDelete, hasRecentPending, Notice, walrusIndex, WalrusStatus } from "@/components/ui";
+import { anchorIndex, ConfirmDelete, hasRecentPending, Notice, SuiStatus, walrusIndex, WalrusStatus } from "@/components/ui";
 import { formatDate } from "@/lib/domain/schedule";
 import { CATEGORY_LABELS } from "@/lib/domain/types";
 import { firstName, requireElder } from "@/server/page-data";
@@ -13,13 +13,17 @@ export const metadata: Metadata = { title: "Memories" };
 export default async function MemoriesPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
   const { notice } = await searchParams;
   const { ctx, elder } = await requireElder();
-  const [memories, family, records] = await Promise.all([
+  const [memories, family, records, anchors] = await Promise.all([
     ctx.repo.list("memories", elder.id),
     ctx.repo.list("family_members", elder.id),
     ctx.repo.walrusRecords(elder.id),
+    // Sui status is optional: if the Phase 3B table is unavailable, show "Not anchored".
+    ctx.repo.memoryAnchors(elder.id).catch(() => []),
   ]);
   const people = new Map(family.map((f) => [f.id, f]));
   const status = walrusIndex(records);
+  const sui = anchorIndex(anchors, status);
+  const anchoring = ctx.anchor?.enabled ?? false;
   const now = Date.now();
   const name = firstName(elder.full_name);
 
@@ -55,6 +59,7 @@ export default async function MemoriesPage({ searchParams }: { searchParams: Pro
                   </p>
                   <p>{m.description}</p>
                   <WalrusStatus record={status.get(m.id)} kind="memory" sourceId={m.id} now={now} />
+                  <SuiStatus anchor={sui.get(m.id)} memoryId={m.id} walrus={status.get(m.id)} enabled={anchoring} />
                   <div className="item-actions">
                     <Link href={`/memories/${m.id}`} className="btn btn-secondary btn-small">
                       Edit

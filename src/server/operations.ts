@@ -11,7 +11,7 @@ import {
   validatePhoto,
 } from "../lib/domain/validation";
 import type { SyncSource } from "../lib/walrus-sync/sync";
-import { familyMemberText, memoryText, profileText, routineText } from "../lib/walrus-sync/text";
+import { contentHash, familyMemberText, memoryText, profileText, routineText } from "../lib/walrus-sync/text";
 import type { Ctx } from "./ports";
 
 /**
@@ -313,6 +313,44 @@ export async function retryWalrus(ctx: Ctx, kind: string, sourceId: string): Pro
         return { ok: true, message: "This item changed while saving; the latest version is being stored." } as OpResult;
       default:
         return { ok: false, message: "The Walrus write failed again. Please try later." } as OpResult;
+    }
+  });
+}
+
+// ── Sui anchor retry (Phase 3B) ──────────────────────────────────────────
+const ANCHOR_INELIGIBLE: Record<string, string> = {
+  "walrus-pending": "This memory is still being saved to Walrus. It can be anchored once it is stored.",
+  "walrus-failed": "Save this memory to Walrus first.",
+  "no-walrus-record": "Save this memory to Walrus first.",
+  "no-blob": "Save this memory to Walrus first.",
+  "stale-content": "This memory changed since it was stored on Walrus. It can be anchored once the latest version is stored.",
+};
+
+/** Anchor (or re-check) the current version of one memory on Sui and wait for the result. */
+export async function retrySuiAnchor(ctx: Ctx, memoryId: string): Promise<OpResult> {
+  if (!uuid.safeParse(memoryId).success) return NOT_FOUND;
+  if (!ctx.anchor?.enabled) return { ok: false, message: "Sui anchoring is not turned on." };
+  return guard(async () => {
+    const elder = await ctx.repo.getElder();
+    if (!elder) return NOT_FOUND;
+    const src = await buildSource(ctx, elder, "memory", memoryId); // RLS: own memories only
+    if (!src?.text) return NOT_FOUND;
+    const outcome = await ctx.anchor!.anchor({ caregiverId: ctx.userId, memoryId, expectedContentHash: contentHash(src.text) }, { retryFailed: true });
+    switch (outcome.status) {
+      case "verified":
+        return { ok: true, message: "Verified on Sui." } as OpResult;
+      case "submitted":
+        return { ok: true, message: "Submitted to Sui. Waiting for independent verification — check again in a minute." } as OpResult;
+      case "pending":
+        return { ok: false, message: "Sent to Sui, but the result is not confirmed yet. Check again in a minute." } as OpResult;
+      case "busy":
+        return { ok: false, message: "This memory is already being anchored. Check again in a minute." } as OpResult;
+      case "ineligible":
+        return { ok: false, message: ANCHOR_INELIGIBLE[outcome.reason] ?? NOT_FOUND.message } as OpResult;
+      case "disabled":
+        return { ok: false, message: "Sui anchoring is not turned on." } as OpResult;
+      default:
+        return { ok: false, message: "Anchoring on Sui failed. Please try again later." } as OpResult;
     }
   });
 }
