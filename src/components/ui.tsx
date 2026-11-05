@@ -28,6 +28,8 @@ const NOTICES: Record<string, { kind: "success" | "error" | "info"; text: string
   error: { kind: "error", text: "Something went wrong. Please try again." },
   "need-profile": { kind: "info", text: "Start by creating the profile of the person you care for." },
   "confirm-failed": { kind: "error", text: "That confirmation link didn't work or has expired. Please sign in or register again." },
+  "link-expired": { kind: "error", text: "That reset link didn't work or has expired. Please ask for a new one below." },
+  "password-updated": { kind: "success", text: "Your password has been changed." },
 };
 
 /** Fixed messages selected by a ?notice= code (never renders arbitrary query text). */

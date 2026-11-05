@@ -36,3 +36,18 @@ export const SpeakerIcon = () => (
     <path d="M19 6a8.5 8.5 0 0 1 0 12" />
   </svg>
 );
+export const CalendarIcon = () => (
+  <svg {...base}>
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M3 10h18" />
+    <path d="M8 3v4" />
+    <path d="M16 3v4" />
+  </svg>
+);
+export const MoreIcon = () => (
+  <svg {...base}>
+    <circle cx="5" cy="12" r="1.6" fill="currentColor" />
+    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+    <circle cx="19" cy="12" r="1.6" fill="currentColor" />
+  </svg>
+);

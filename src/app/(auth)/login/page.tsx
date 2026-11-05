@@ -12,7 +12,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <h2>Sign in</h2>
       <Notice code={notice} />
       <LoginForm next={next} />
-      <p style={{ marginTop: "1.25rem" }}>
+      <p style={{ marginTop: "1rem" }}>
+        <Link href="/forgot-password">Forgot your password?</Link>
+      </p>
+      <p>
         New to DayMate? <Link href="/register">Create a caregiver account</Link>
       </p>
     </div>

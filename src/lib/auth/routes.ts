@@ -1,5 +1,5 @@
 /** Routes reachable without a session. Everything else requires login. */
-export const PUBLIC_ROUTES = ["/login", "/register", "/auth/confirm"] as const;
+export const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/auth/confirm"] as const;
 /**
  * Elder-device routes. They never use a caregiver session: each page checks
  * the paired-device cookie itself (see src/server/elder-context.ts).
@@ -8,7 +8,7 @@ export const ELDER_ROUTES = ["/home", "/pair"] as const;
 /** Static app files an unpaired device must be able to fetch (install manifest, offline page). */
 export const PUBLIC_ASSETS = ["/manifest.webmanifest", "/sw.js", "/offline.html"] as const;
 /** Auth pages a signed-in caregiver should be bounced away from. */
-const AUTH_PAGES = ["/login", "/register"];
+const AUTH_PAGES = ["/login", "/register", "/forgot-password"];
 
 export const HOME = "/dashboard";
 
