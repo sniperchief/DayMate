@@ -12,6 +12,7 @@ const NAV = [
   { href: "/family", label: "Family" },
   { href: "/routines", label: "Routines" },
   { href: "/memories", label: "Memories" },
+  { href: "/device", label: "Elder's device" },
 ];
 
 export function NavLinks() {

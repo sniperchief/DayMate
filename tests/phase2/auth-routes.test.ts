@@ -30,6 +30,16 @@ describe("routeAccess (proxy route guard)", () => {
     expect(routeAccess("/", true)).toEqual({ type: "redirect", to: "/dashboard" });
   });
 
+  it.each(["/home", "/home/ask", "/pair"])("lets paired elder devices reach %s without a caregiver session", (path) => {
+    expect(routeAccess(path, false)).toEqual({ type: "allow" });
+    expect(routeAccess(path, true)).toEqual({ type: "allow" });
+  });
+
+  it("does not treat look-alike elder paths as elder routes", () => {
+    expect(routeAccess("/homepage", false).type).toBe("redirect");
+    expect(routeAccess("/pairing", false).type).toBe("redirect");
+  });
+
   it("still lets signed-in users complete email confirmation", () => {
     expect(routeAccess("/auth/confirm", true)).toEqual({ type: "allow" });
   });

@@ -9,7 +9,7 @@ import { requireCtx } from "@/server/context";
 import * as ops from "@/server/operations";
 import type { OpResult } from "@/server/operations";
 
-const ALL_PAGES = ["/dashboard", "/profile", "/family", "/routines", "/memories"];
+const ALL_PAGES = ["/dashboard", "/profile", "/family", "/routines", "/memories", "/home"];
 
 function revalidateAll(): void {
   for (const p of ALL_PAGES) revalidatePath(p);

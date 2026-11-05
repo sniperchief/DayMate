@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { routeAccess } from "./lib/auth/routes";
+import { isElderRoute, routeAccess } from "./lib/auth/routes";
+import { DEVICE_COOKIE, deviceCookieOptions, isWellFormedToken } from "./lib/devices/cookie";
 import { publicSupabaseEnv } from "./lib/supabase/env";
 
 /**
@@ -9,6 +10,15 @@ import { publicSupabaseEnv } from "./lib/supabase/env";
  * this is not the only access check (RLS enforces data access).
  */
 export async function proxy(request: NextRequest) {
+  // Elder devices: no caregiver session. Keep the pairing cookie alive (browsers
+  // cap cookie lifetime at 400 days); validity is checked by each elder page.
+  if (isElderRoute(request.nextUrl.pathname)) {
+    const res = NextResponse.next({ request });
+    const token = request.cookies.get(DEVICE_COOKIE)?.value;
+    if (isWellFormedToken(token)) res.cookies.set(DEVICE_COOKIE, token, deviceCookieOptions());
+    return res;
+  }
+
   let response = NextResponse.next({ request });
   const { url, key } = publicSupabaseEnv();
 
@@ -41,3 +51,4 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };
+
