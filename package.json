@@ -27,7 +27,8 @@
     "move:test": "sui move test --path move/daymate_anchor",
     "sui:localnet-e2e": "tsx scripts/sui-localnet-e2e.ts",
     "sui:publish": "tsx scripts/sui-publish.ts",
-    "device:check": "tsx scripts/device-check.ts"
+    "device:check": "tsx scripts/device-check.ts",
+    "dev:lan": "next dev -H 0.0.0.0 --experimental-https"
   },
   "dependencies": {
     "@grpc/grpc-js": "1.14.6",

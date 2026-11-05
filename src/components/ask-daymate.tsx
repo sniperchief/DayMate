@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { askAction } from "@/app/(app)/ask/actions";
-import type { AskResult, Source } from "@/server/ask";
+import type { Source } from "@/server/ask";
 
 interface Message {
   id: number;
@@ -23,16 +23,7 @@ const SOURCE_LABELS: Record<Source, string> = {
  * Question-and-answer view. The conversation lives only in this component's
  * state (this browser tab); every question is answered fresh on the server.
  */
-export function AskDayMate({
-  elderId,
-  examples,
-  action = askAction,
-}: {
-  elderId: string;
-  examples: string[];
-  /** Server action that answers; defaults to the caregiver's. Elder devices pass their own. */
-  action?: (question: unknown, elderId: unknown) => Promise<AskResult>;
-}) {
+export function AskDayMate({ elderId, examples }: { elderId: string; examples: string[] }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [question, setQuestion] = useState("");
   const [pending, startTransition] = useTransition();
@@ -53,7 +44,7 @@ export function AskDayMate({
     startTransition(async () => {
       let reply: Message;
       try {
-        const res = await action(q, elderId);
+        const res = await askAction(q, elderId);
         reply = res.ok
           ? { id: nextId.current++, role: "answer", text: res.answer.text, sources: res.answer.sources, noAnswer: res.answer.noAnswer }
           : { id: nextId.current++, role: "error", text: res.error };
