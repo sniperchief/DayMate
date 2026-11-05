@@ -27,6 +27,7 @@ export default async function EditMemoryPage({ params }: { params: Promise<{ id:
         <MemoryForm
           action={updateMemoryAction.bind(null, id)}
           submitLabel="Save changes"
+          hasPhoto={Boolean(m.photo_path)}
           people={family.map((f) => ({ id: f.id, label: `${f.full_name} (${f.relationship})` }))}
           defaults={{ title: m.title, description: m.description, event_date: m.event_date, related_person_id: m.related_person_id, category: m.category }}
         />

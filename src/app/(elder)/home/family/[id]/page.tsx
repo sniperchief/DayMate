@@ -19,7 +19,7 @@ export default async function ElderPersonPage({ params }: { params: Promise<{ id
   if (!member) notFound();
   const [routines, memories] = await Promise.all([ctx.repo.list("routines", elder.id), ctx.repo.list("memories", elder.id)]);
   const view = buildPerson({ member, routines, memories, timezone: elder.timezone });
-  const urls = await ctx.photos.signedUrls(member.photo_path ? [member.photo_path] : []);
+  const urls = await ctx.photos.signedUrls([member.photo_path, ...view.memories.map((m) => m.photoPath)].filter((p): p is string => Boolean(p)));
   const name = firstName(member.full_name);
 
   return (
@@ -58,6 +58,10 @@ export default async function ElderPersonPage({ params }: { params: Promise<{ id
           <ul className="memory-list">
             {view.memories.map((m) => (
               <li key={m.id} className="elder-card">
+                {m.photoPath && urls[m.photoPath] && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={urls[m.photoPath]} alt="" className="memory-photo" />
+                )}
                 <h3 className="memory-title">{m.title}</h3>
                 {m.when && <p className="memory-when">{m.when.charAt(0).toUpperCase() + m.when.slice(1)}</p>}
                 <p className="memory-text">{m.text}</p>

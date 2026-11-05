@@ -101,14 +101,16 @@ export function MemoryForm({
   defaults = {},
   people,
   submitLabel,
+  hasPhoto = false,
 }: {
   action: Action;
   defaults?: Defaults;
   people: { id: string; label: string }[];
   submitLabel: string;
+  hasPhoto?: boolean;
 }) {
   return (
-    <FormShell action={action} defaults={defaults} submitLabel={submitLabel}>
+    <FormShell action={action} defaults={defaults} submitLabel={submitLabel} multipart>
       <TextField name="title" label="Title" required maxLength={120} hint="For example: Sophie got engaged." />
       <TextArea name="description" label="What happened?" required maxLength={2000} hint="Describe it simply, the way you'd remind them of it." />
       <div className="row">
@@ -116,6 +118,8 @@ export function MemoryForm({
         <TextField name="event_date" label="When did it happen?" type="date" />
       </div>
       <SelectField name="related_person_id" label="Who was involved?" placeholder="No one in particular" options={people.map((p) => ({ value: p.id, label: p.label }))} />
+      <FileField name="photo" label="Photo (optional)" hint="A picture helps them remember. JPEG, PNG or WebP, up to 4 MB." />
+      {hasPhoto && <Checkbox name="remove_photo" label="Remove the current photo" />}
     </FormShell>
   );
 }

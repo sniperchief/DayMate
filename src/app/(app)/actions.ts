@@ -90,7 +90,7 @@ export async function deleteRoutineAction(id: string): Promise<void> {
 export async function createMemoryAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const ctx = await requireCtx();
   const values = formValues(formData);
-  const r = await ops.createMemory(ctx, values);
+  const r = await ops.createMemory(ctx, values, formData.get("photo"));
   if (r.ok) revalidateAll();
   return toState(r, values);
 }
@@ -98,7 +98,7 @@ export async function createMemoryAction(_prev: FormState, formData: FormData): 
 export async function updateMemoryAction(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const ctx = await requireCtx();
   const values = formValues(formData);
-  const r = await ops.updateMemory(ctx, id, values);
+  const r = await ops.updateMemory(ctx, id, values, formData.get("photo"));
   if (!r.ok) return toState(r, values);
   revalidateAll();
   redirect("/memories?notice=updated");

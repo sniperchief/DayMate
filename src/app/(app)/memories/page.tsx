@@ -23,6 +23,7 @@ export default async function MemoriesPage({ searchParams }: { searchParams: Pro
   const people = new Map(family.map((f) => [f.id, f]));
   const status = walrusIndex(records);
   const sui = anchorIndex(anchors, status);
+  const photoUrls = await ctx.photos.signedUrls(memories.map((m) => m.photo_path).filter((p): p is string => Boolean(p)));
   const anchoring = ctx.anchor?.enabled ?? false;
   const now = Date.now();
   const name = firstName(elder.full_name);
@@ -58,6 +59,10 @@ export default async function MemoriesPage({ searchParams }: { searchParams: Pro
                     {person ? ` · with ${person.full_name} (${person.relationship})` : ""}
                   </p>
                   <p>{m.description}</p>
+                  {m.photo_path && photoUrls[m.photo_path] && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoUrls[m.photo_path]} alt={`Photo for “${m.title}”`} className="memory-thumb" />
+                  )}
                   <WalrusStatus record={status.get(m.id)} kind="memory" sourceId={m.id} now={now} />
                   <SuiStatus anchor={sui.get(m.id)} memoryId={m.id} walrus={status.get(m.id)} enabled={anchoring} />
                   <div className="item-actions">

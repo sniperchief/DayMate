@@ -256,29 +256,49 @@ async function checkRelatedPerson(ctx: Ctx, elder: Elder, personId: string | nul
   return Boolean(person && person.elder_id === elder.id);
 }
 
-export async function createMemory(ctx: Ctx, values: Record<string, string>): Promise<OpResult> {
+export async function createMemory(ctx: Ctx, values: Record<string, string>, photo: FormDataEntryValue | null = null): Promise<OpResult> {
   const parsed = parseForm(memorySchema, values);
-  if (!parsed.ok) return invalid(parsed.fieldErrors);
+  const p = validatePhoto(photo);
+  if (!parsed.ok || p.error) return invalid({ ...(parsed.ok ? {} : parsed.fieldErrors), ...(p.error ? { photo: p.error } : {}) });
   return guard(async () => {
     const elder = await ctx.repo.getElder();
     if (!elder) return NO_PROFILE;
     if (!(await checkRelatedPerson(ctx, elder, parsed.data.related_person_id))) return invalid({ related_person_id: "Choose a person from the list." });
-    const memory = await ctx.repo.insert("memories", { ...parsed.data, elder_id: elder.id });
+    // photo_path is only written when a photo is chosen (works before the M5 migration otherwise)
+    const photo_path = p.file ? await storePhoto(ctx, elder.id, "memory", p.file) : null;
+    let memory: Memory;
+    try {
+      memory = await ctx.repo.insert("memories", { ...parsed.data, elder_id: elder.id, ...(photo_path ? { photo_path } : {}) });
+    } catch (err) {
+      await discardPhoto(ctx, photo_path);
+      throw err;
+    }
     await scheduleSync(ctx, async () => ctx.sync.background(await memorySource(ctx, elder, memory)));
     return { ok: true, id: memory.id, message: "Memory saved." } as OpResult;
   });
 }
 
-export async function updateMemory(ctx: Ctx, id: string, values: Record<string, string>): Promise<OpResult> {
+export async function updateMemory(ctx: Ctx, id: string, values: Record<string, string>, photo: FormDataEntryValue | null = null): Promise<OpResult> {
   if (!uuid.safeParse(id).success) return NOT_FOUND;
   const parsed = parseForm(memorySchema, values);
-  if (!parsed.ok) return invalid(parsed.fieldErrors);
+  const p = validatePhoto(photo);
+  if (!parsed.ok || p.error) return invalid({ ...(parsed.ok ? {} : parsed.fieldErrors), ...(p.error ? { photo: p.error } : {}) });
+  const removePhoto = values.remove_photo === "on";
   return guard(async () => {
     const elder = await ctx.repo.getElder();
     if (!elder) return NOT_FOUND;
     if (!(await checkRelatedPerson(ctx, elder, parsed.data.related_person_id))) return invalid({ related_person_id: "Choose a person from the list." });
-    const memory = await ctx.repo.update("memories", id, parsed.data);
-    if (!memory) return NOT_FOUND;
+    const existing = await ctx.repo.get("memories", id);
+    if (!existing) return NOT_FOUND;
+    const oldPhoto = existing.photo_path ?? null;
+    const photo_path = p.file ? await storePhoto(ctx, elder.id, "memory", p.file) : removePhoto ? null : oldPhoto;
+    const photoChanged = photo_path !== oldPhoto;
+    const memory = await ctx.repo.update("memories", id, { ...parsed.data, ...(photoChanged ? { photo_path } : {}) });
+    if (!memory) {
+      if (p.file) await discardPhoto(ctx, photo_path);
+      return NOT_FOUND;
+    }
+    if (photoChanged) await discardPhoto(ctx, oldPhoto);
     await scheduleSync(ctx, async () => ctx.sync.background(await memorySource(ctx, elder, memory)));
     return { ok: true, id, message: "Memory updated." } as OpResult;
   });
@@ -286,7 +306,12 @@ export async function updateMemory(ctx: Ctx, id: string, values: Record<string, 
 
 export async function deleteMemory(ctx: Ctx, id: string): Promise<OpResult> {
   if (!uuid.safeParse(id).success) return NOT_FOUND;
-  return guard(async () => ((await ctx.repo.remove("memories", id)) ? ({ ok: true, message: "Memory deleted." } as OpResult) : NOT_FOUND));
+  return guard(async () => {
+    const existing = await ctx.repo.get("memories", id);
+    if (!existing || !(await ctx.repo.remove("memories", id))) return NOT_FOUND;
+    await discardPhoto(ctx, existing.photo_path);
+    return { ok: true, message: "Memory deleted." } as OpResult;
+  });
 }
 
 // ── Walrus retry ─────────────────────────────────────────────────────────

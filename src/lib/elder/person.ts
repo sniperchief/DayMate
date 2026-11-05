@@ -13,7 +13,7 @@ export interface PersonView {
   intro: string; // "This is Helen Example, your daughter."
   about: string; // caregiver's description, or ""
   next: { title: string; when: string } | null; // when: "today at 3:00 PM", "on Thursday at 3:00 PM"
-  memories: { id: string; title: string; when: string | null; text: string }[];
+  memories: { id: string; title: string; when: string | null; text: string; photoPath: string | null }[];
   speech: string;
 }
 
@@ -74,7 +74,7 @@ export function buildPerson({
     .filter((m) => day(m) <= today)
     .sort((a, b) => day(b).localeCompare(day(a)))
     .slice(0, memoryLimit)
-    .map((m) => ({ id: m.id, title: m.title.trim(), when: m.event_date ? friendlyPast(m.event_date, today) : null, text: sentence(m.description) }));
+    .map((m) => ({ id: m.id, title: m.title.trim(), when: m.event_date ? friendlyPast(m.event_date, today) : null, text: sentence(m.description), photoPath: m.photo_path ?? null }));
 
   const parts = [intro, about];
   if (next) parts.push(`Next: ${next.title}, ${next.when}.`);

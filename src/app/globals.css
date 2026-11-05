@@ -670,6 +670,15 @@ details.add > summary::-webkit-details-marker {
   }
 }
 
+.memory-thumb {
+  display: block;
+  max-width: 240px;
+  max-height: 180px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin: 0.5rem 0;
+}
+
 /* ── Elder's device pairing (caregiver side) ── */
 .checkbox {
   display: flex;
@@ -1026,8 +1035,70 @@ details.add > summary::-webkit-details-marker {
 }
 .memory-card {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   align-items: flex-start;
+}
+.memory-body {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+.memory-featured {
+  border-width: 2px;
+  border-color: var(--accent);
+}
+.memory-photo {
+  width: 100%;
+  max-width: 22rem;
+  max-height: 18rem;
+  border-radius: 14px;
+  object-fit: cover;
+}
+.memory-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.memory-tabs a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 0.5rem;
+  border-radius: 14px;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: var(--surface);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1.2;
+}
+.memory-tabs a[aria-current="page"] {
+  background: var(--accent);
+  color: #fff;
+}
+.elder-speak {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 56px;
+  margin-top: 0.75rem;
+  padding: 0 1rem;
+  border-radius: 14px;
+  border: 2px solid var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.elder-speak svg {
+  width: 28px;
+  height: 28px;
+}
+.elder-speak[aria-pressed="true"] {
+  background: var(--accent-soft);
 }
 .memory-title {
   margin: 0;

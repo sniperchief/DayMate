@@ -71,6 +71,8 @@ export interface Memory {
   event_date: string | null;
   related_person_id: string | null;
   category: MemoryCategory;
+  /** Optional photo (redesign M5); undefined before that migration is applied. */
+  photo_path?: string | null;
   created_at: string;
   updated_at: string;
 }
