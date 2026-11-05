@@ -1,0 +1,9 @@
+[package]
+name = "daymate_anchor"
+edition = "2024"
+
+# The Sui system packages (std, sui) are added implicitly by the Sui CLI
+# (>= 1.45), so no [dependencies] section is needed.
+
+[addresses]
+daymate_anchor = "0x0"

@@ -8,20 +8,48 @@
     "node": ">=20.0.0"
   },
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "memory:health": "tsx scripts/health.ts",
     "memory:seed": "tsx scripts/seed.ts",
     "memory:recall": "tsx scripts/recall.ts",
     "memory:verify": "tsx scripts/verify.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "app:rls-check": "tsx scripts/rls-check.ts",
+    "app:smoke": "tsx scripts/app-smoke.ts",
+    "ask:smoke": "tsx scripts/ask-smoke.ts",
+    "sui:preflight": "tsx scripts/sui-preflight.ts",
+    "sui:rls-check": "tsx scripts/sui-rls-check.ts",
+    "sui:anchor-synthetic": "tsx scripts/sui-anchor-synthetic.ts",
+    "move:build": "sui move build --path move/daymate_anchor",
+    "move:test": "sui move test --path move/daymate_anchor",
+    "sui:localnet-e2e": "tsx scripts/sui-localnet-e2e.ts",
+    "sui:publish": "tsx scripts/sui-publish.ts",
+    "device:check": "tsx scripts/device-check.ts",
+    "dev:lan": "next dev -H 0.0.0.0 --experimental-https"
   },
   "dependencies": {
+    "@grpc/grpc-js": "1.14.6",
     "@mysten-incubation/memwal": "^0.1.12",
     "@mysten/seal": "^1.5.2",
-    "@mysten/sui": "^2.38.0"
+    "@mysten/sui": "^2.38.0",
+    "@protobuf-ts/grpc-transport": "2.11.1",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "next": "^16.4.5",
+    "qrcode": "1.5.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "@types/qrcode": "1.5.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.1.0"

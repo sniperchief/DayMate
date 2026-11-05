@@ -77,20 +77,25 @@ export function loadMemoryConfig(env: Env = process.env): MemoryConfig {
     throw invalid("MEMWAL_SERVER_URL must use https.", `Use ${MAINNET_RELAYER_URL}.`);
   }
 
+  assertValidNamespace(namespace);
+
+  return { accountId, privateKey, serverUrl, namespace };
+}
+
+/** Namespaces must be dedicated to DayMate: lowercase, no "default", ≤ 255 bytes. */
+export function assertValidNamespace(namespace: string): void {
   if (!NAMESPACE_RE.test(namespace) || Buffer.byteLength(namespace, "utf8") > 255) {
     throw invalid(
-      "MEMWAL_NAMESPACE must be lowercase letters, digits, '.', '_' or '-' (max 255 bytes).",
+      "Namespace must be lowercase letters, digits, '.', '_' or '-' (max 255 bytes).",
       "For example: daymate-phase1",
     );
   }
   if (namespace === "default") {
     throw invalid(
-      'MEMWAL_NAMESPACE must not be "default".',
+      'Namespace must not be "default".',
       "Use a dedicated DayMate namespace (e.g. daymate-phase1) to isolate DayMate's memories.",
     );
   }
-
-  return { accountId, privateKey, serverUrl, namespace };
 }
 
 /** Configuration safe to print: the key is never included. */

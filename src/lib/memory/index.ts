@@ -1,4 +1,4 @@
-export { MAINNET_RELAYER_URL, loadMemoryConfig, describeConfig } from "./config";
+export { MAINNET_RELAYER_URL, loadMemoryConfig, describeConfig, assertValidNamespace } from "./config";
 export type { MemoryConfig } from "./config";
 export { MemoryServiceError, toMemoryError, redact } from "./errors";
 export type { MemoryErrorCode } from "./errors";

@@ -9,6 +9,12 @@ node_modules/
 # local run output (may contain account-scoped metadata)
 .daymate/
 
+# Sui / Move build output and any local key material
+move/**/build/
+*.keystore
+sui.keystore
+*.key
+
 # build output (future Next.js app)
 .next/
 out/
