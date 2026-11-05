@@ -5,6 +5,8 @@ export const PUBLIC_ROUTES = ["/login", "/register", "/auth/confirm"] as const;
  * the paired-device cookie itself (see src/server/elder-context.ts).
  */
 export const ELDER_ROUTES = ["/home", "/pair"] as const;
+/** Static app files an unpaired device must be able to fetch (install manifest, offline page). */
+export const PUBLIC_ASSETS = ["/manifest.webmanifest", "/sw.js", "/offline.html"] as const;
 /** Auth pages a signed-in caregiver should be bounced away from. */
 const AUTH_PAGES = ["/login", "/register"];
 
@@ -18,7 +20,7 @@ export type RouteDecision = { type: "allow" } | { type: "redirect"; to: string }
 
 /** Pure access decision used by the proxy (and unit-tested). */
 export function routeAccess(pathname: string, isAuthenticated: boolean): RouteDecision {
-  if (ELDER_ROUTES.some((r) => matches(pathname, r))) return { type: "allow" };
+  if (ELDER_ROUTES.some((r) => matches(pathname, r)) || (PUBLIC_ASSETS as readonly string[]).includes(pathname)) return { type: "allow" };
   const isPublic = PUBLIC_ROUTES.some((r) => matches(pathname, r));
   if (!isAuthenticated && !isPublic) {
     const next = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;

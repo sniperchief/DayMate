@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DEVICE_COOKIE, deviceFromToken, type ElderDevice } from "../lib/devices/pairing";
@@ -25,7 +26,7 @@ export async function currentDevice(): Promise<ElderDevice | null> {
  * Request context for a paired elder device: READ-ONLY and scoped to the one
  * elder the device was paired with. Unpaired or revoked devices go to /pair.
  */
-export async function optionalElderSession(): Promise<ElderSession | null> {
+export const optionalElderSession = cache(async (): Promise<ElderSession | null> => {
   const device = await currentDevice();
   if (!device) return null;
   const admin = adminClient();
@@ -34,7 +35,7 @@ export async function optionalElderSession(): Promise<ElderSession | null> {
   if (!elder) return null;
   const ctx: Ctx = { userId: device.caregiver_id, repo, photos: elderPhotoStore(admin, device.caregiver_id), sync: noSync, recall: walrusRecaller };
   return { ctx, elder, device };
-}
+});
 
 export async function requireElderSession(): Promise<ElderSession> {
   const session = await optionalElderSession();

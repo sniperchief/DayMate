@@ -35,6 +35,10 @@ describe("routeAccess (proxy route guard)", () => {
     expect(routeAccess(path, true)).toEqual({ type: "allow" });
   });
 
+  it.each(["/manifest.webmanifest", "/sw.js", "/offline.html"])("lets anyone fetch the app file %s", (path) => {
+    expect(routeAccess(path, false)).toEqual({ type: "allow" });
+  });
+
   it("does not treat look-alike elder paths as elder routes", () => {
     expect(routeAccess("/homepage", false).type).toBe("redirect");
     expect(routeAccess("/pairing", false).type).toBe("redirect");
