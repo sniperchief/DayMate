@@ -1567,3 +1567,44 @@ input[type="time"]::-webkit-date-and-time-value {
 .elder {
   padding-top: calc(1.5rem + env(safe-area-inset-top));
 }
+
+/* ── No sideways overflow on phones ──
+   Grid/flex children default to min-width: auto, so a field's natural width
+   (iOS text and especially date inputs are wide) could push the form wider
+   than the card and the screen, making Safari zoom the page out. Every form
+   track and field may now shrink to the space it has. */
+form.form,
+.field,
+.row {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 761px) {
+  .row {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  }
+}
+form.form > *,
+.field > *,
+.row > *,
+.card,
+.item-body,
+.elder-stack > * {
+  min-width: 0;
+}
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+input[type="file"] {
+  width: 100%;
+}
+/* iOS Safari only: let date/time inputs take the field's width instead of their fixed native width */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"],
+  input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+  }
+}

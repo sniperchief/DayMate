@@ -10,8 +10,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#faf7f2",
-  // lets env(safe-area-inset-*) keep content clear of the notch and home indicator
-  viewportFit: "cover",
+  // No viewport-fit=cover: the browser keeps pages out of the notch and status
+  // bar itself; the env(safe-area-inset-*) paddings then resolve to 0.
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
