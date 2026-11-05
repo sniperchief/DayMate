@@ -56,3 +56,9 @@ export async function setDeviceVoiceAction(deviceId: string, enabled: boolean): 
   if (uuid.safeParse(deviceId).success) await deviceAdmin(adminClient(), ctx.userId).setVoice(deviceId, enabled);
   revalidatePath("/device");
 }
+
+export async function setDeviceKeepScreenOnAction(deviceId: string, enabled: boolean): Promise<void> {
+  const ctx = await requireCtx();
+  if (uuid.safeParse(deviceId).success) await deviceAdmin(adminClient(), ctx.userId).setKeepScreenOn(deviceId, enabled);
+  revalidatePath("/device");
+}

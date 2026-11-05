@@ -57,6 +57,8 @@ export interface ElderDevice {
   elder_id: string;
   name: string;
   voice_enabled: boolean;
+  /** Redesign M6; false/undefined before that migration is applied. */
+  keep_screen_on?: boolean;
   paired_at: string;
   last_seen_at: string | null;
   revoked_at: string | null;

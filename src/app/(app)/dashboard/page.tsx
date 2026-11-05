@@ -3,7 +3,9 @@ import Link from "next/link";
 import { PendingRefresher } from "@/components/bits";
 import { Avatar, hasRecentPending } from "@/components/ui";
 import { DayTimeline } from "@/components/timeline";
+import { deviceAdmin } from "@/lib/devices/supabase-store";
 import { formatDate, localNow, upcomingOccurrences } from "@/lib/domain/schedule";
+import { adminClient } from "@/lib/supabase/admin";
 import { CATEGORY_LABELS } from "@/lib/domain/types";
 import { firstName, requireElder } from "@/server/page-data";
 
@@ -22,6 +24,12 @@ export default async function DashboardPage() {
   const upcoming = upcomingOccurrences(routines, now, elder.timezone, 3);
   const urls = await ctx.photos.signedUrls([elder.photo_path, ...family.map((f) => f.photo_path)].filter((p): p is string => Boolean(p)));
   const name = firstName(elder.full_name);
+  // Device status is a convenience: never let it break the dashboard.
+  const devices = await deviceAdmin(adminClient(), ctx.userId)
+    .list()
+    .catch(() => null);
+  const lastUsed = devices?.map((d) => d.last_seen_at).filter((d): d is string => Boolean(d)).sort().at(-1) ?? null;
+  const daysIdle = lastUsed ? Math.floor((now.getTime() - new Date(lastUsed).getTime()) / 86_400_000) : null;
 
   const stored = records.filter((r) => r.status === "stored").length;
   const notStored = records.filter((r) => r.status !== "stored").length;
@@ -77,6 +85,29 @@ export default async function DashboardPage() {
           )}
         </section>
       </div>
+
+      {devices && (
+        <section className="section card" aria-labelledby="device-h">
+          <div className="section-head">
+            <h2 id="device-h">{name}&apos;s device</h2>
+            <Link href="/device">Manage</Link>
+          </div>
+          {devices.length === 0 ? (
+            <p className="empty">
+              No tablet or phone paired yet. <Link href="/device">Pair one</Link> so {name} can use DayMate on their own.
+            </p>
+          ) : (
+            <p style={{ margin: 0 }}>
+              {devices.length === 1 ? devices[0]!.name : `${devices.length} devices`} ·{" "}
+              {lastUsed ? (daysIdle === 0 ? "used today" : `last used ${daysIdle} day${daysIdle === 1 ? "" : "s"} ago`) : "not used yet"}
+              {daysIdle !== null && daysIdle >= 3 && <span className="pill" style={{ marginLeft: "0.5rem" }}>Check in</span>}
+            </p>
+          )}
+          <p style={{ margin: "0.75rem 0 0" }}>
+            <Link href="/home">Preview what {name} sees</Link>
+          </p>
+        </section>
+      )}
 
       <section className="section card" aria-labelledby="memories-h">
         <div className="section-head">

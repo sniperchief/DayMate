@@ -802,6 +802,15 @@ details.add > summary::-webkit-details-marker {
 }
 
 /* ── Elder shell (paired device) ── */
+.preview-banner {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 1rem;
+  font-weight: 600;
+}
 .elder-shell {
   max-width: 56rem;
   margin: 0 auto;

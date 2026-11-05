@@ -1,7 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DeviceStore, ElderDevice } from "./pairing";
 
-export const DEVICE_COLUMNS = "id, caregiver_id, elder_id, name, voice_enabled, paired_at, last_seen_at, revoked_at";
+/**
+ * Devices are read with `*` and mapped, so optional columns added by later
+ * migrations (keep_screen_on) never break pairing; token_hash is dropped here
+ * and never leaves this module.
+ */
+function toDevice(row: Record<string, unknown>): ElderDevice {
+  return {
+    id: String(row.id),
+    caregiver_id: String(row.caregiver_id),
+    elder_id: String(row.elder_id),
+    name: String(row.name),
+    voice_enabled: row.voice_enabled === true,
+    keep_screen_on: row.keep_screen_on === true,
+    paired_at: String(row.paired_at),
+    last_seen_at: (row.last_seen_at as string | null) ?? null,
+    revoked_at: (row.revoked_at as string | null) ?? null,
+  };
+}
 
 /**
  * DeviceStore over `elder_devices` / `elder_pairing_codes`, using the
@@ -35,9 +52,9 @@ export function supabaseDeviceStore(admin: SupabaseClient): DeviceStore {
     },
 
     async findActiveDevice(tokenHash) {
-      const { data, error } = await admin.from("elder_devices").select(DEVICE_COLUMNS).eq("token_hash", tokenHash).is("revoked_at", null).maybeSingle();
+      const { data, error } = await admin.from("elder_devices").select("*").eq("token_hash", tokenHash).is("revoked_at", null).maybeSingle();
       if (error) fail("select", error);
-      return (data as ElderDevice | null) ?? null;
+      return data ? toDevice(data as Record<string, unknown>) : null;
     },
 
     async touch(deviceId) {
@@ -51,13 +68,18 @@ export function supabaseDeviceStore(admin: SupabaseClient): DeviceStore {
 export function deviceAdmin(admin: SupabaseClient, caregiverId: string) {
   return {
     async list(): Promise<ElderDevice[]> {
-      const { data, error } = await admin.from("elder_devices").select(DEVICE_COLUMNS).eq("caregiver_id", caregiverId).is("revoked_at", null).order("paired_at", { ascending: false });
+      const { data, error } = await admin.from("elder_devices").select("*").eq("caregiver_id", caregiverId).is("revoked_at", null).order("paired_at", { ascending: false });
       if (error) throw new Error(`list devices: ${error.message}`);
-      return (data as ElderDevice[]) ?? [];
+      return ((data as Record<string, unknown>[]) ?? []).map(toDevice);
     },
     async revoke(deviceId: string): Promise<boolean> {
       const { data, error } = await admin.from("elder_devices").update({ revoked_at: new Date().toISOString() }).eq("id", deviceId).eq("caregiver_id", caregiverId).is("revoked_at", null).select("id");
       if (error) throw new Error(`revoke device: ${error.message}`);
+      return (data?.length ?? 0) > 0;
+    },
+    async setKeepScreenOn(deviceId: string, enabled: boolean): Promise<boolean> {
+      const { data, error } = await admin.from("elder_devices").update({ keep_screen_on: enabled }).eq("id", deviceId).eq("caregiver_id", caregiverId).is("revoked_at", null).select("id");
+      if (error) throw new Error(`device keep screen on: ${error.message}`);
       return (data?.length ?? 0) > 0;
     },
     async setVoice(deviceId: string, enabled: boolean): Promise<boolean> {

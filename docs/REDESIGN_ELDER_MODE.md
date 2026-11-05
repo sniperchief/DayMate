@@ -1,15 +1,27 @@
 # DayMate redesign: elder mode
 
-This redesign gives the elder their own simple, voice-first DayMate on a paired tablet or phone. It's designed for moderate memory loss. The caregiver's app stays as it was, with one new page: **Elder's device**.
+This redesign gives the elder their own simple, voice-first DayMate on a paired tablet or phone. It's designed for moderate memory loss. The caregiver's app stays as it was, with one new page (**Elder's device**), a device card on the dashboard, and optional photos on memories.
 
 | Milestone | Status |
 |---|---|
 | M1. Pairing and read-only elder access | Done |
 | M2. Elder shell and Home (Today) | Done |
 | M3. Voice Ask | Done |
-| M4. My family: person pages | Next |
-| M5. Memories: photos, tabs, memory of the day | Planned |
-| M6. Polish and real-device testing | Planned |
+| M4. My family: person pages | Done |
+| M5. Memories: photos, tabs, memory of the day | Done |
+| M6. Preview, keep screen on, dashboard status | Done (real-device testing is yours) |
+
+## Database migrations
+
+Apply these in the Supabase SQL editor, in order. The first two are from earlier phases.
+
+| File | Adds | Needed for |
+|---|---|---|
+| `20261105000000_elder_devices.sql` | `elder_devices`, `elder_pairing_codes`, `redeem_pairing_code()` | Pairing (M1). Already applied. |
+| `20261105100000_memory_photos.sql` | `memories.photo_path` | Photos on memories (M5) |
+| `20261105200000_device_keep_screen_on.sql` | `elder_devices.keep_screen_on` | Keep the screen on (M6) |
+
+Memories without photos, and pairing itself, keep working before the last two are applied.
 
 ## Design rules
 
@@ -74,6 +86,42 @@ Everything is built from Postgres in the elder's own time zone (`src/lib/elder/t
 
 **Answers** come from the unchanged `ask()` (`src/server/elder-ask.ts`). The people shown are matched from the answer text by full name, or by first name when that first name is unique. No IDs or storage paths reach the browser.
 
+## M4: My family
+
+- Each face on **My family** opens that person's page:
+  - a large photo and "This is Helen Example, your daughter.";
+  - the caregiver's description;
+  - the **next time with Helen**, found from active routines that mention her first name, e.g. "Today at 3:00 PM" or "On Monday at 3:00 PM";
+  - up to three recent memories with her, either linked to her or naming her.
+- The page **speaks the introduction when it opens**. Some browsers block speech that isn't started by a tap; then **Tell me about Helen** does the same.
+- An unknown or removed person shows "I can't find that" with a **Go to Home** button. There are no dead ends.
+
+Logic: `src/lib/elder/person.ts`.
+
+## M5: Memories
+
+**Caregiver side:**
+- A memory can have an optional **photo**, stored in the private photos bucket with the same rules as family photos.
+- Replacing a photo, removing it, or deleting the memory cleans up the old file.
+- Photos are not written to Walrus and are not part of the Sui commitment. Changing only the photo doesn't rewrite the Walrus memory.
+
+**Elder side:**
+- Three big tabs: **Recent**, **With family** (linked to a person, or the family/visit category) and **Things I enjoy** (preference/activity).
+- A **Memory of the day** card stays the same all day. It prefers memories with a photo, and only shows memories that have already happened.
+- Each memory has a **Read this to me** button.
+
+Logic: `src/lib/elder/memories.ts`.
+
+## M6: Polish
+
+**Preview what the elder sees.** A signed-in caregiver who opens `/home` without a paired device sees their own elder's screens. It's read-only, through the caregiver's own RLS session, with a banner: "Preview: this is what Rose sees. Back to DayMate". There are links from **Elder's device** and the dashboard.
+
+**Keep the screen on.** This is a per-device setting on **Elder's device**. While DayMate is open, it uses the Screen Wake Lock API where supported, for a tablet kept on a table or stand. It uses more battery, so it's off by default.
+
+**Dashboard device card.** It shows the paired device and when it was last used, flags **Check in** after 3 or more days without use, and links to the preview.
+
+**Robustness.** Devices are read with `select *` and mapped, so optional columns never break pairing. Token hashes never leave the store module. The proxy refreshes the caregiver session on every route, so preview keeps working.
+
 ## Testing on a phone or tablet
 
 The microphone only works over **https** (or on `localhost`).
@@ -88,9 +136,31 @@ The microphone only works over **https** (or on `localhost`).
 4. On the phone, scan the QR code, then tap **Connect this device**. Allow the microphone when asked.
 5. If the page won't load on the phone, allow Node.js through Windows Firewall for private networks.
 
-## Tests
+## Test checklist (real devices)
+
+**Caregiver (computer):**
+1. Apply the two new migrations, then run `npm run device:check`. All checks should pass.
+2. **Elder's device → Preview Rose's screens.** The banner shows and every screen loads.
+3. **Memories → add a memory with a photo.** The thumbnail shows. Then edit it: replace the photo, then remove it.
+4. Check the dashboard shows the device card.
+
+**Elder (tablet or phone, paired via `npm run dev:lan`):**
+1. **Home:** the greeting, date and time are right, and the Today card matches the routines. **Read to me** speaks it.
+2. **Ask:** tap the microphone and say "um, who is my daughter".
+   - "You asked: Who is my daughter?" appears.
+   - The answer shows the photo and is read aloud.
+   - Try **That's not what I said**, **Say it again** and **Ask something else**, and a tapped suggestion.
+3. **Ask:** say a family name slightly wrong, for example "who is Ellen" for Helen. It should be corrected.
+4. **Family:** tap a face. The introduction is spoken, and the next visit and memories show.
+5. **Memories:** switch between the three tabs, check the memory of the day, and try **Read this to me**.
+6. **Leave it for 3 minutes on another screen.** It should return to Home.
+7. **Add to Home Screen.** The DayMate icon should open full-screen at Home. With Wi-Fi off, the offline page appears.
+8. **On the computer:** turn **Keep the screen on** on, then check the tablet stays awake while DayMate is open.
+9. **On the computer:** unpair. The tablet goes to "Connect this device" on its next tap.
+
+## Automated tests
 
 ```
-npm test               # includes tests/redesign (pairing, read-only access, Today, voice clean-up; mocks)
-npm run device:check   # LIVE Supabase: pairing, isolation, RLS
+npm test               # includes tests/redesign (pairing, read-only access, Today, voice clean-up, person pages, memories, memory photos; mocks)
+npm run device:check   # LIVE Supabase: pairing, isolation, RLS, device settings
 ```

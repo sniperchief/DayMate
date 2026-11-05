@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { revokeDeviceAction, setDeviceVoiceAction } from "@/app/(app)/device/actions";
+import Link from "next/link";
+import { revokeDeviceAction, setDeviceKeepScreenOnAction, setDeviceVoiceAction } from "@/app/(app)/device/actions";
 import { PairingPanel } from "@/components/pairing-panel";
 import { ConfirmDelete } from "@/components/ui";
 import { deviceAdmin } from "@/lib/devices/supabase-store";
@@ -31,6 +32,11 @@ export default async function DevicePage() {
         <p>
           Pair {name}&apos;s tablet or phone once. After that, DayMate opens straight to {name}&apos;s own simple screens: no password, no editing, nothing to get lost in.
         </p>
+        <p>
+          <Link href="/home" className="btn btn-secondary">
+            Preview {name}&apos;s screens
+          </Link>
+        </p>
       </div>
 
       <section className="card" aria-labelledby="pair-h">
@@ -52,11 +58,20 @@ export default async function DevicePage() {
                 </p>
                 <p>
                   Speaking questions: <strong>{d.voice_enabled ? "On" : "Off"}</strong>
+                  <br />
+                  Keep the screen on while DayMate is open: <strong>{d.keep_screen_on ? "On" : "Off"}</strong>
+                  <br />
+                  <span className="muted">Useful for a tablet kept on a table or stand. Uses more battery.</span>
                 </p>
                 <div className="item-actions">
                   <form action={setDeviceVoiceAction.bind(null, d.id, !d.voice_enabled)}>
                     <button type="submit" className="btn btn-secondary btn-small">
                       {d.voice_enabled ? "Turn speaking off" : "Turn speaking on"}
+                    </button>
+                  </form>
+                  <form action={setDeviceKeepScreenOnAction.bind(null, d.id, !d.keep_screen_on)}>
+                    <button type="submit" className="btn btn-secondary btn-small">
+                      {d.keep_screen_on ? "Let the screen sleep" : "Keep the screen on"}
                     </button>
                   </form>
                   <ConfirmDelete action={revokeDeviceAction.bind(null, d.id)} label="Unpair" question={`Unpair this device? It will stop showing ${name}'s information straight away.`} />

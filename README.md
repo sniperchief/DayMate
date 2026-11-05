@@ -22,7 +22,7 @@ DayMate's memory layer is **[Walrus Memory](https://docs.wal.app/walrus-memory/s
 
 - **Phase 3B: Sui Mainnet anchoring + Tatum verification.** Once a memory's current version is stored on Walrus, DayMate can publish a salted SHA-256 commitment of it on Sui Mainnet. Only 32 bytes and a schema number go on chain, never personal data. Tatum independently verifies each transaction. The feature is off until `SUI_ANCHOR_ENABLED=true`. See [docs/PHASE3B_SUI.md](docs/PHASE3B_SUI.md).
 
-- **Redesign: elder mode (in progress).** The elder gets their own paired tablet or phone with large, simple screens: Today, voice-first Ask with answers read aloud, family photos and memories. It returns to Home after 3 minutes and can be installed to the home screen. M1–M3 are done. See [docs/REDESIGN_ELDER_MODE.md](docs/REDESIGN_ELDER_MODE.md).
+- **Redesign: elder mode.** The elder gets their own paired tablet or phone with large, simple screens: Today, voice-first Ask with answers read aloud, family photos and memories. It returns to Home after 3 minutes and can be installed to the home screen. M1–M6 are built; real-device testing is next. See [docs/REDESIGN_ELDER_MODE.md](docs/REDESIGN_ELDER_MODE.md).
 
 Not built yet: AI features, notifications, and medical features.
 

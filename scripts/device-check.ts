@@ -5,7 +5,8 @@
  * store, then checks the device sees only A's elder, can never write, and that
  * caregivers cannot read token hashes or pairing codes. Test users are deleted.
  *
- * Requires the 20261105000000_elder_devices.sql migration.
+ * Requires the 20261105000000_elder_devices.sql and
+ * 20261105200000_device_keep_screen_on.sql migrations.
  *
  *   npm run device:check
  */
@@ -98,6 +99,12 @@ main(async () => {
       const r = await anon().from(t).select("id");
       check(`anonymous users cannot read ${t}`, Boolean(r.error) || (r.data?.length ?? 0) === 0);
     }
+
+    // ── caregiver device management ──
+    const listed = await deviceAdmin(svc, a.id).list();
+    check("device list never includes token hashes", listed.length === 1 && !JSON.stringify(listed).includes("token_hash"));
+    check("A can turn 'keep the screen on' on", (await deviceAdmin(svc, a.id).setKeepScreenOn(device.id, true)) && (await deviceFromToken(store, paired!.token))?.keep_screen_on === true);
+    check("B cannot change A's device settings", (await deviceAdmin(svc, b.id).setKeepScreenOn(device.id, false)) === false && (await deviceAdmin(svc, b.id).setVoice(device.id, false)) === false);
 
     // ── revoke ──
     check("B cannot unpair A's device", (await deviceAdmin(svc, b.id).revoke(device.id)) === false);

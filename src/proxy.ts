@@ -10,15 +10,6 @@ import { publicSupabaseEnv } from "./lib/supabase/env";
  * this is not the only access check (RLS enforces data access).
  */
 export async function proxy(request: NextRequest) {
-  // Elder devices: no caregiver session. Keep the pairing cookie alive (browsers
-  // cap cookie lifetime at 400 days); validity is checked by each elder page.
-  if (isElderRoute(request.nextUrl.pathname)) {
-    const res = NextResponse.next({ request });
-    const token = request.cookies.get(DEVICE_COOKIE)?.value;
-    if (isWellFormedToken(token)) res.cookies.set(DEVICE_COOKIE, token, deviceCookieOptions());
-    return res;
-  }
-
   let response = NextResponse.next({ request });
   const { url, key } = publicSupabaseEnv();
 
@@ -37,6 +28,16 @@ export async function proxy(request: NextRequest) {
   });
 
   const { data } = await supabase.auth.getClaims();
+
+  // Elder devices: always allowed (each elder page checks the paired-device
+  // cookie, or a caregiver's read-only preview). Keep the pairing cookie alive;
+  // browsers cap cookie lifetime at 400 days.
+  if (isElderRoute(request.nextUrl.pathname)) {
+    const token = request.cookies.get(DEVICE_COOKIE)?.value;
+    if (isWellFormedToken(token)) response.cookies.set(DEVICE_COOKIE, token, deviceCookieOptions());
+    return response;
+  }
+
   const decision = routeAccess(request.nextUrl.pathname, Boolean(data?.claims?.sub));
 
   if (decision.type === "redirect") {
