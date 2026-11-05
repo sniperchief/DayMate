@@ -10,7 +10,7 @@ describe("routeAccess (proxy route guard)", () => {
     expect(routeAccess("/", false)).toEqual({ type: "redirect", to: "/login" });
   });
 
-  it.each(["/login", "/register", "/auth/confirm"])("allows signed-out access to %s", (path) => {
+  it.each(["/login", "/register", "/forgot-password", "/auth/confirm"])("allows signed-out access to %s", (path) => {
     expect(routeAccess(path, false)).toEqual({ type: "allow" });
   });
 
@@ -42,6 +42,12 @@ describe("routeAccess (proxy route guard)", () => {
   it("does not treat look-alike elder paths as elder routes", () => {
     expect(routeAccess("/homepage", false).type).toBe("redirect");
     expect(routeAccess("/pairing", false).type).toBe("redirect");
+  });
+
+  it("keeps the reset-password page behind a session (reached via the emailed link)", () => {
+    expect(routeAccess("/reset-password", false).type).toBe("redirect");
+    expect(routeAccess("/reset-password", true)).toEqual({ type: "allow" });
+    expect(routeAccess("/forgot-password", true)).toEqual({ type: "redirect", to: "/dashboard" });
   });
 
   it("still lets signed-in users complete email confirmation", () => {

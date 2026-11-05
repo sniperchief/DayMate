@@ -110,6 +110,15 @@ export const registerSchema = credentialsSchema.extend({
   display_name: optionalText("Your name", 80),
 });
 
+export const forgotPasswordSchema = credentialsSchema.pick({ email: true });
+
+export const newPasswordSchema = z
+  .object({
+    password: credentialsSchema.shape.password,
+    confirm_password: z.string(),
+  })
+  .refine((v) => v.password === v.confirm_password, { message: "The two passwords don't match.", path: ["confirm_password"] });
+
 export type ElderInput = z.output<typeof elderSchema>;
 export type FamilyMemberInput = z.output<typeof familyMemberSchema>;
 export type RoutineInput = z.output<typeof routineSchema>;

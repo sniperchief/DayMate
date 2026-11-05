@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PendingRefresher } from "@/components/bits";
-import { Avatar, hasRecentPending } from "@/components/ui";
+import { Avatar, hasRecentPending, Notice } from "@/components/ui";
 import { DayTimeline } from "@/components/timeline";
 import { deviceAdmin } from "@/lib/devices/supabase-store";
 import { formatDate, localNow, upcomingOccurrences } from "@/lib/domain/schedule";
@@ -11,7 +11,8 @@ import { firstName, requireElder } from "@/server/page-data";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
+  const { notice } = await searchParams;
   const { ctx, elder } = await requireElder();
   const [family, routines, memories, records] = await Promise.all([
     ctx.repo.list("family_members", elder.id),
@@ -47,6 +48,8 @@ export default async function DashboardPage() {
           {elder.description && <p>{elder.description}</p>}
         </div>
       </div>
+
+      <Notice code={notice} />
 
       <div className="dash-grid">
         <section className="card" aria-labelledby="upcoming-h">

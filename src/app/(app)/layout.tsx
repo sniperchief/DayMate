@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logoutAction } from "@/app/(auth)/actions";
 import { NavLinks } from "@/components/bits";
+import { MobileTabBar } from "@/components/mobile-nav";
 import { requireCtx } from "@/server/context";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -14,17 +15,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             DayMate
             <small>A little help remembering what matters.</small>
           </Link>
-          <nav aria-label="Main">
+          {/* wide screens: top menu; phones use the bottom tab bar instead */}
+          <nav aria-label="Main" className="desktop-nav">
             <NavLinks />
           </nav>
-          <form action={logoutAction}>
+          <form action={logoutAction} className="desktop-nav">
             <button type="submit" className="btn btn-secondary btn-small">
               Sign out
             </button>
           </form>
         </div>
       </header>
-      <main id="main">{children}</main>
+      <main id="main" className="app-main">
+        {children}
+      </main>
+      <MobileTabBar />
     </>
   );
 }

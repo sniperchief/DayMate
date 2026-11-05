@@ -73,3 +73,19 @@ npm run dev          # http://localhost:3000
 - A pending write that is lost when the server restarts shows as "not confirmed" after 3 minutes, and can then be retried.
 - Reminders are only shown in the app: there are no notifications, by design.
 - Deleting an item removes it from DayMate. Its encrypted Walrus blob stays in the elder's namespace but is no longer referenced.
+
+
+## Password reset
+
+The sign-in page has **Forgot your password?** (`/forgot-password`). It always gives the same reply, whether or not an account exists, so it can't be used to find out who is registered. The emailed link goes through `/auth/confirm` to `/reset-password`, where the caregiver chooses a new password; afterwards they land on the dashboard. An expired or reused link returns to `/forgot-password` with a clear message.
+
+**Recommended: make email links work on any device.** By default, Supabase's links only work in the same browser that requested them. That breaks when someone requests a reset on a computer and opens the email on their phone. Change the link in two email templates (**Authentication → Emails → Templates**):
+
+| Template | Replace the link with |
+|---|---|
+| Reset Password | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password` |
+| Confirm signup | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/profile` |
+
+`/auth/confirm` already handles both kinds of link. **Site URL** must be your deployed address, for example `https://trydaymate.vercel.app`.
+
+Supabase's built-in email sender is limited to a few emails per hour, and only to members of your Supabase organisation. Connect your own SMTP provider (**Authentication → Emails → SMTP Settings**) before real families sign up.
