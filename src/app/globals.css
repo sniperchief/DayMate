@@ -946,6 +946,39 @@ details.add > summary::-webkit-details-marker {
   font-size: 2.2rem;
 }
 
+/* Person page */
+.elder-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+.elder-photo-xl {
+  width: 168px;
+  height: 168px;
+  font-size: 3rem;
+}
+.person-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+.person-intro {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  line-height: 1.2;
+}
+.person-about {
+  margin: 0.75rem 0 0;
+  font-size: 1.35rem;
+}
+.elder-subtitle {
+  font-size: 1.6rem;
+  margin: 0 0 0.75rem;
+}
+
 /* Family wall */
 .family-wall {
   list-style: none;
@@ -960,14 +993,24 @@ details.add > summary::-webkit-details-marker {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  height: 100%;
+  color: var(--text);
+  text-decoration: none;
+  border-width: 2px;
+}
+.family-tile:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 .family-name {
+  display: block;
   margin: 0.75rem 0 0;
   font-size: 1.45rem;
   font-weight: 700;
   line-height: 1.2;
 }
 .family-rel {
+  display: block;
   margin: 0.25rem 0 0;
   color: var(--text-muted);
 }

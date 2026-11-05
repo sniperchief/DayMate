@@ -1,5 +1,5 @@
 /** Round photo, or large initials when there is no photo. Decorative: the name is always shown as text. */
-export function ElderPhoto({ name, url, size = "md" }: { name: string; url?: string | null; size?: "sm" | "md" | "lg" }) {
+export function ElderPhoto({ name, url, size = "md" }: { name: string; url?: string | null; size?: "sm" | "md" | "lg" | "xl" }) {
   const initials = name
     .split(/\s+/)
     .filter(Boolean)
