@@ -7,11 +7,10 @@ import { IDLE, type FormState } from "@/lib/domain/types";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/ask", label: "Ask DayMate" },
-  { href: "/profile", label: "Profile" },
+  { href: "/memories", label: "Memories" },
   { href: "/family", label: "Family" },
   { href: "/routines", label: "Routines" },
-  { href: "/memories", label: "Memories" },
+  { href: "/ask", label: "Ask DayMate" },
   { href: "/device", label: "Elder's device" },
 ];
 
