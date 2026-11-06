@@ -21,10 +21,10 @@ export type RouteDecision = { type: "allow" } | { type: "redirect"; to: string }
 /** Pure access decision used by the proxy (and unit-tested). */
 export function routeAccess(pathname: string, isAuthenticated: boolean): RouteDecision {
   if (ELDER_ROUTES.some((r) => matches(pathname, r)) || (PUBLIC_ASSETS as readonly string[]).includes(pathname)) return { type: "allow" };
-  const isPublic = PUBLIC_ROUTES.some((r) => matches(pathname, r));
+  // "/" is the public landing page; signed-in caregivers are sent on to the dashboard below.
+  const isPublic = pathname === "/" || PUBLIC_ROUTES.some((r) => matches(pathname, r));
   if (!isAuthenticated && !isPublic) {
-    const next = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;
-    return { type: "redirect", to: `/login${next}` };
+    return { type: "redirect", to: `/login?next=${encodeURIComponent(pathname)}` };
   }
   if (isAuthenticated && (pathname === "/" || AUTH_PAGES.some((r) => matches(pathname, r)))) {
     return { type: "redirect", to: HOME };

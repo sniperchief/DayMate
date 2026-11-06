@@ -6,8 +6,8 @@ describe("routeAccess (proxy route guard)", () => {
     expect(routeAccess(path, false)).toEqual({ type: "redirect", to: `/login?next=${encodeURIComponent(path)}` });
   });
 
-  it("sends signed-out visitors at / to plain /login", () => {
-    expect(routeAccess("/", false)).toEqual({ type: "redirect", to: "/login" });
+  it("shows signed-out visitors the public landing page at /", () => {
+    expect(routeAccess("/", false)).toEqual({ type: "allow" });
   });
 
   it.each(["/login", "/register", "/forgot-password", "/auth/confirm"])("allows signed-out access to %s", (path) => {
